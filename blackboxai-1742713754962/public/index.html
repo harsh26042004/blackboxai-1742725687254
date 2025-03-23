@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinancialTwin - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full mx-4">
+        <!-- Auth Forms Container -->
+        <div id="authForms" class="bg-white rounded-lg shadow-lg p-8">
+            <div class="text-center mb-8">
+                <i class="fas fa-chart-line text-indigo-600 text-3xl mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800">FinancialTwin</h2>
+                <p class="text-gray-600">Your AI-Powered Financial Planner</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="loginEmail" required class="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="loginPassword" required class="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Login
+                </button>
+            </form>
+
+            <div class="mt-4 text-center">
+                <button onclick="toggleForms()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                    Don't have an account? Register
+                </button>
+            </div>
+
+            <!-- Register Form (Hidden by default) -->
+            <form id="registerForm" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="registerUsername" required class="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="registerEmail" required class="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="registerPassword" required class="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Register
+                </button>
+            </form>
+
+            <div id="registerToggle" class="hidden mt-4 text-center">
+                <button onclick="toggleForms()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                    Already have an account? Login
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast Messages -->
+        <div id="toastContainer" class="fixed bottom-4 right-4 space-y-2"></div>
+    </div>
+
+    <script>
+        // Toggle between login and register forms
+        function toggleForms() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const registerToggle = document.getElementById('registerToggle');
+            const loginToggle = document.querySelector('[onclick="toggleForms()"]').parentElement;
+
+            loginForm.classList.toggle('hidden');
+            registerForm.classList.toggle('hidden');
+            registerToggle.classList.toggle('hidden');
+            loginToggle.classList.toggle('hidden');
+        }
+
+        // Show toast message
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-500 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white`;
+            toast.innerHTML = `
+                <div class="flex items-center space-x-4">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                    <p>${message}</p>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(200%)';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: document.getElementById('loginEmail').value,
+                        password: document.getElementById('loginPassword').value
+                    })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || 'Login failed');
+                }
+
+                const data = await response.json();
+                localStorage.setItem('token', data.token);
+                window.location.href = '/dashboard.html';
+            } catch (err) {
+                showToast(err.message || 'An error occurred. Please try again.', 'error');
+            }
+        });
+
+        // Handle register form submission
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: document.getElementById('registerUsername').value,
+                        email: document.getElementById('registerEmail').value,
+                        password: document.getElementById('registerPassword').value
+                    })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || 'Registration failed');
+                }
+
+                const data = await response.json();
+                localStorage.setItem('token', data.token);
+                window.location.href = '/dashboard.html';
+            } catch (err) {
+                showToast(err.message || 'An error occurred. Please try again.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
