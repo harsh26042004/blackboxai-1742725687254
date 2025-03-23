@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-coins text-yellow-500 text-2xl mr-2"></i>
+                    <span class="text-xl font-semibold">Finance Tracker</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-coins text-yellow-500 mr-2"></i>
+                        <span id="coinBalance" class="font-semibold">1000</span>
+                    </div>
+                    <a href="/" class="text-gray-700 hover:text-gray-900">Home</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Income Setup Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Set Your Monthly Income</h2>
+            <div class="flex space-x-4">
+                <input type="number" id="incomeInput" placeholder="Enter your monthly income" 
+                    class="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="setIncome()" 
+                    class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                    Set Income
+                </button>
+            </div>
+            <p class="mt-2 text-gray-600">Current Monthly Income: $<span id="currentIncome">0</span></p>
+        </div>
+
+        <!-- Expense Tracking Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Add Expense Form -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">Add Expense</h2>
+                <div class="space-y-4">
+                    <input type="text" id="expenseTitle" placeholder="Expense Title" 
+                        class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" id="expenseAmount" placeholder="Amount" 
+                        class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="expenseCategory" 
+                        class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Category</option>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Others">Others</option>
+                    </select>
+                    <button onclick="addExpense()" 
+                        class="w-full bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition duration-300">
+                        Add Expense
+                    </button>
+                </div>
+            </div>
+
+            <!-- Expense Summary -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">Expense Summary</h2>
+                <div class="space-y-2">
+                    <p>Total Expenses: $<span id="totalExpenses">0</span></p>
+                    <p>Remaining Budget: $<span id="remainingBudget">0</span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="budgetProgress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Expense by Category Chart -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">Expenses by Category</h2>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Spending Trend -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">Monthly Spending Trend</h2>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Expenses Table -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
+            <h2 class="text-2xl font-semibold mb-4">Recent Expenses</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Expenses will be dynamically added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize charts
+        let categoryChart;
+        let trendChart;
+
+        // Initialize data
+        let monthlyIncome = 0;
+        let expenses = [];
+        let coins = 1000; // Starting coins
+
+        // Load data from localStorage
+        function loadData() {
+            const savedIncome = localStorage.getItem('monthlyIncome');
+            const savedExpenses = localStorage.getItem('expenses');
+            const savedCoins = localStorage.getItem('coins');
+
+            if (savedIncome) {
+                monthlyIncome = parseFloat(savedIncome);
+                document.getElementById('currentIncome').textContent = monthlyIncome;
+            }
+            if (savedExpenses) {
+                expenses = JSON.parse(savedExpenses);
+                updateExpenseTable();
+                updateCharts();
+                updateSummary();
+            }
+            if (savedCoins) {
+                coins = parseFloat(savedCoins);
+                document.getElementById('coinBalance').textContent = coins;
+            }
+        }
+
+        // Set monthly income
+        function setIncome() {
+            const incomeInput = document.getElementById('incomeInput');
+            const income = parseFloat(incomeInput.value);
+            
+            if (income && income > 0) {
+                monthlyIncome = income;
+                document.getElementById('currentIncome').textContent = income;
+                localStorage.setItem('monthlyIncome', income);
+                updateSummary();
+                incomeInput.value = '';
+            }
+        }
+
+        // Add new expense
+        function addExpense() {
+            const title = document.getElementById('expenseTitle').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const category = document.getElementById('expenseCategory').value;
+
+            if (title && amount && amount > 0 && category) {
+                const expense = {
+                    date: new Date().toISOString().split('T')[0],
+                    title,
+                    amount,
+                    category
+                };
+
+                expenses.push(expense);
+                localStorage.setItem('expenses', JSON.stringify(expenses));
+
+                // Update coins based on spending
+                updateCoins(amount);
+
+                // Clear form
+                document.getElementById('expenseTitle').value = '';
+                document.getElementById('expenseAmount').value = '';
+                document.getElementById('expenseCategory').value = '';
+
+                // Update UI
+                updateExpenseTable();
+                updateCharts();
+                updateSummary();
+            }
+        }
+
+        // Update coins based on spending
+        function updateCoins(expenseAmount) {
+            const monthlyTotal = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            
+            if (monthlyTotal > monthlyIncome) {
+                // Deduct coins if overspending
+                const deduction = Math.floor((expenseAmount / monthlyIncome) * 100);
+                coins = Math.max(0, coins - deduction);
+            } else {
+                // Add coins for staying within budget
+                const bonus = Math.floor((1 - (monthlyTotal / monthlyIncome)) * 10);
+                coins += bonus;
+            }
+
+            document.getElementById('coinBalance').textContent = coins;
+            localStorage.setItem('coins', coins);
+        }
+
+        // Update expense table
+        function updateExpenseTable() {
+            const tableBody = document.getElementById('expenseTableBody');
+            tableBody.innerHTML = '';
+
+            expenses.slice().reverse().forEach(expense => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${expense.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${expense.title}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${expense.category}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">$${expense.amount}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Update summary section
+        function updateSummary() {
+            const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const remaining = monthlyIncome - totalExpenses;
+            const progressPercentage = (totalExpenses / monthlyIncome) * 100;
+
+            document.getElementById('totalExpenses').textContent = totalExpenses.toFixed(2);
+            document.getElementById('remainingBudget').textContent = remaining.toFixed(2);
+            document.getElementById('budgetProgress').style.width = `${Math.min(100, progressPercentage)}%`;
+        }
+
+        // Update charts
+        function updateCharts() {
+            // Category chart
+            const categoryData = {};
+            expenses.forEach(expense => {
+                categoryData[expense.category] = (categoryData[expense.category] || 0) + expense.amount;
+            });
+
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+
+            categoryChart = new Chart(document.getElementById('categoryChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryData),
+                    datasets: [{
+                        data: Object.values(categoryData),
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF',
+                            '#FF9F40'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Trend chart
+            const dailyData = {};
+            expenses.forEach(expense => {
+                dailyData[expense.date] = (dailyData[expense.date] || 0) + expense.amount;
+            });
+
+            const sortedDates = Object.keys(dailyData).sort();
+
+            if (trendChart) {
+                trendChart.destroy();
+            }
+
+            trendChart = new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: 'Daily Spending',
+                        data: sortedDates.map(date => dailyData[date]),
+                        borderColor: '#36A2EB',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load data on page load
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>
